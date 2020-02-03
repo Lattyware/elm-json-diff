@@ -1,0 +1,10 @@
+# Node
+/node_modules/
+
+# JetBrains
+/.idea/
+
+# Elm
+/elm-stuff/
+docs.json
+
