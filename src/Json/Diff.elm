@@ -24,8 +24,11 @@ This uses a relatively expensive, but not perfect weight function to decide what
 the JSON to a string and looks at the length), but it should give pretty reasonable results most of the time. If you
 want something more efficient or accurate you can use [`diffWithCustomWeight`](Json.Diff#diffWithCustomWeight).
 
-Note that this is a simple diff that never produces moves or copies, and as such the patches will be inefficient if
-those are common operations in your case.
+This won't produce moves in the patch. If you use [`invertibleDiff`](Json.Diff#invertibleDiff) and
+[`Invertible.merge`](Json.Patch.Invertible#merge) you can merge adds and removes of the same value into moves.
+
+Note that this diff doesn't search for duplicated values and so will never produces copies, and as such the patches
+will not be concise if that is a common operation in your case.
 
 -}
 diff : Json.Value -> Json.Value -> JsonP.Patch

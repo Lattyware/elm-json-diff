@@ -1,6 +1,6 @@
 module Json.Patch.Invertible exposing
     ( Patch, Operation(..)
-    , invert, apply
+    , apply, invert, merge
     , toPatch, toMinimalPatch, fromPatch
     )
 
@@ -14,7 +14,7 @@ module Json.Patch.Invertible exposing
 
 # Operations
 
-@docs invert, apply
+@docs apply, invert, merge
 
 
 # Compatibility
@@ -26,6 +26,7 @@ module Json.Patch.Invertible exposing
 import Json.Decode as Json
 import Json.Patch as Json
 import Json.Pointer as Json
+import Set
 
 
 {-| A list of invertible [`Operation`](Json.Patch.Invertible#Operation])s that are performed one after another.
@@ -73,6 +74,78 @@ This is just a convenience function to do `patch |> toMinimalPatch |> Json.Patch
 apply : Patch -> Json.Value -> Result String Json.Value
 apply =
     toMinimalPatch >> Json.apply
+
+
+{-| Take a patch and merge any `Remove` and `Add` operations that have the same values into single `Move` options.
+
+The resulting patch should always do the same thing as it did before, but may be smaller.
+
+-}
+merge : Patch -> Patch
+merge patch =
+    let
+        filterAdd op =
+            case op of
+                Add pointer value ->
+                    Just ( pointer, value )
+
+                _ ->
+                    Nothing
+
+        filterRemove op =
+            case op of
+                Remove pointer value ->
+                    Just ( pointer, value )
+
+                _ ->
+                    Nothing
+
+        adds =
+            patch |> List.filterMap filterAdd
+
+        removes =
+            patch |> List.filterMap filterRemove
+
+        pairs =
+            adds |> List.concatMap (\a -> removes |> List.map (\r -> ( a, r )))
+
+        isMove ( ( _, av ), ( _, rv ) ) =
+            av == rv && rv == av
+
+        moves =
+            pairs |> List.filter isMove
+
+        filterUsed ( ( ap, av ), ( rp, rv ) ) ( filtered, usedAdds, usedRemoves ) =
+            if (usedAdds |> Set.member ap) || (usedRemoves |> Set.member rp) then
+                ( filtered, usedAdds, usedRemoves )
+
+            else
+                ( ( ( ap, av ), ( rp, rv ) ) :: filtered, usedAdds |> Set.insert ap, usedRemoves |> Set.insert rp )
+
+        ( filteredMoves, _, _ ) =
+            moves |> List.foldr filterUsed ( [], Set.empty, Set.empty )
+
+        replace op =
+            case op of
+                Add pointer value ->
+                    if filteredMoves |> List.any (\( ( p, _ ), _ ) -> p == pointer) then
+                        Nothing
+
+                    else
+                        Add pointer value |> Just
+
+                Remove pointer value ->
+                    case filteredMoves |> List.filter (\( _, ( p, _ ) ) -> p == pointer) |> List.head of
+                        Just ( ( ap, _ ), ( rp, _ ) ) ->
+                            Move rp ap |> Just
+
+                        Nothing ->
+                            Remove pointer value |> Just
+
+                _ ->
+                    op |> Just
+    in
+    patch |> List.filterMap replace
 
 
 {-| Create a normal patch from an invertible one.

@@ -344,6 +344,21 @@ cases =
                 "a": {"a": { "b" : { "c" : { "1" : 1, "2": 2, "3": 3 } } } },
                 "b": {"a": { "b" : { "c" : { "x" : 1, "y": 2, "z": 3 } } } },
                 "patch": [{"op": "replace", "path": "/a/b/c", "value": { "x" : 1, "y": 2, "z": 3 }}]
+            },
+            {
+                "description": "add and remove the same value",
+                "a": {"a": 1, "b": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+                "b": {"d": 1, "b": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+                "patch": [{"op": "remove", "path": "/a"}, {"op": "add", "path": "/d", "value": 1}]
+            },
+            {
+                "description": "add and remove the same value multiple times",
+                "a": {"a": 1, "b": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "c": 1},
+                "b": {"d": 1, "b": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "e": 1},
+                "patch": [
+                    {"op": "remove", "path": "/a"}, {"op": "remove", "path": "/c"},
+                    {"op": "add", "path": "/d", "value": 1}, {"op": "add", "path": "/e", "value": 1}
+                ]
             }
         ]
     """
