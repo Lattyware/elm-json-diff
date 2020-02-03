@@ -338,6 +338,12 @@ cases =
                     { "op": "replace", "path": "/a/2", "value": 13 },
                     { "op": "replace", "path": "/a/3", "value": 14 }
                 ]
+            },
+            {
+                "description": "pick between lots of small changes vs a reasonable replacement",
+                "a": {"a": { "b" : { "c" : { "1" : 1, "2": 2, "3": 3 } } } },
+                "b": {"a": { "b" : { "c" : { "x" : 1, "y": 2, "z": 3 } } } },
+                "patch": [{"op": "replace", "path": "/a/b/c", "value": { "x" : 1, "y": 2, "z": 3 }}]
             }
         ]
     """

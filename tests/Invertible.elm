@@ -5,7 +5,6 @@ import Expect exposing (Expectation)
 import Json.Decode as Json
 import Json.Diff as Diff
 import Json.Encode as JsonE
-import Json.Patch as Json
 import Json.Patch.Invertible as Invertable
 import Test exposing (..)
 

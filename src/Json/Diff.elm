@@ -4,7 +4,7 @@ module Json.Diff exposing (diff, invertibleDiff, diffWithCustomWeight)
 
 This has been implemented rather simply, and is probably not very optimised, but it should work for a lot of use cases.
 
-@docs diff, invertibleDiff, diffWithCustomWeight
+@docs diff, invertibleDiff, diffWithCustomWeight, cheapDiff
 
 -}
 
@@ -62,6 +62,18 @@ diffWithCustomWeight weight =
     internalDiff weight []
 
 
+{-| Does a diff without using any testing of multiple options. This makes computing the diff much cheaper, but is much
+more likely to produce less concise (but still correct) patches.
+
+In particular, removing elements from the start of lists will produce changes for future elements, and lots of small
+changes may be created rather than doing a single replace more efficiently.
+
+-}
+cheapDiff : Json.Value -> Json.Value -> Invertible.Patch
+cheapDiff =
+    internalCheapDiff []
+
+
 
 {- Private -}
 
@@ -86,7 +98,7 @@ internalDiff weight root a b =
                     d
 
                 Nothing ->
-                    case try (Json.dict Json.value) a b |> Maybe.andThen (diffObject weight root) of
+                    case try (Json.dict Json.value) a b |> Maybe.andThen (diffObject (internalDiff weight) root) of
                         Just modify ->
                             if weight modify > weight replace then
                                 replace
@@ -96,6 +108,50 @@ internalDiff weight root a b =
 
                         Nothing ->
                             replace
+
+
+internalCheapDiff : Json.Pointer -> Json.Value -> Json.Value -> Invertible.Patch
+internalCheapDiff root a b =
+    let
+        replace =
+            [ Invertible.Replace root a b ]
+    in
+    case try primitiveDecoder a b |> Maybe.map primitiveEquals of
+        Just equal ->
+            if equal then
+                []
+
+            else
+                replace
+
+        Nothing ->
+            case try (Json.list Json.value) a b |> Maybe.map (cheapDiffList root) of
+                Just d ->
+                    d
+
+                Nothing ->
+                    case try (Json.dict Json.value) a b |> Maybe.andThen (diffObject internalCheapDiff root) of
+                        Just modify ->
+                            modify
+
+                        Nothing ->
+                            replace
+
+
+cheapDiffList : Json.Pointer -> ( List Json.Value, List Json.Value ) -> Invertible.Patch
+cheapDiffList root ( a, b ) =
+    List.range 0 (max (List.length a) (List.length b))
+        |> List.reverse
+        |> List.concatMap (\i -> diffField internalCheapDiff root (String.fromInt i) (get i a) (get i b))
+
+
+get : Int -> List a -> Maybe a
+get i values =
+    if i > 0 then
+        values |> List.drop i |> List.head
+
+    else
+        Nothing
 
 
 defaultPatchWeight : Invertible.Patch -> Int
@@ -191,8 +247,8 @@ diffList weight root ( a, b ) =
         |> List.map (\( op, _ ) -> op)
 
 
-diffObject : (Invertible.Patch -> Int) -> Json.Pointer -> ( Dict String Json.Value, Dict String Json.Value ) -> Maybe Invertible.Patch
-diffObject weight root ( a, b ) =
+diffObject : (Json.Pointer -> Json.Value -> Json.Value -> Invertible.Patch) -> Json.Pointer -> ( Dict String Json.Value, Dict String Json.Value ) -> Maybe Invertible.Patch
+diffObject parentDiff root ( a, b ) =
     let
         aKeys =
             a |> Dict.keys |> Set.fromList
@@ -212,12 +268,12 @@ diffObject weight root ( a, b ) =
     else
         Set.union aKeys bKeys
             |> Set.toList
-            |> List.concatMap (\k -> diffField weight root k (Dict.get k a) (Dict.get k b))
+            |> List.concatMap (\k -> diffField parentDiff root k (Dict.get k a) (Dict.get k b))
             |> Just
 
 
-diffField : (Invertible.Patch -> Int) -> Json.Pointer -> String -> Maybe Json.Value -> Maybe Json.Value -> Invertible.Patch
-diffField weight root key a b =
+diffField : (Json.Pointer -> Json.Value -> Json.Value -> Invertible.Patch) -> Json.Pointer -> String -> Maybe Json.Value -> Maybe Json.Value -> Invertible.Patch
+diffField parentDiff root key a b =
     let
         pointer =
             root ++ [ key ]
@@ -226,7 +282,7 @@ diffField weight root key a b =
         Just ja ->
             case b of
                 Just jb ->
-                    internalDiff weight pointer ja jb
+                    parentDiff pointer ja jb
 
                 Nothing ->
                     [ Invertible.Remove pointer ja ]
