@@ -1,4 +1,4 @@
-module Json.Diff exposing (diff, invertibleDiff, diffWithCustomWeight)
+module Json.Diff exposing (diff, invertibleDiff, diffWithCustomWeight, cheapDiff)
 
 {-| Create a JSON patch by inspecting the difference between two JSON values.
 
