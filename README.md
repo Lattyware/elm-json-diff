@@ -1,6 +1,6 @@
 # elm-json-diff
 
-![Elm package](https://img.shields.io/elm-package/v/lattyware/elm-json-diff) ![GitHub](https://img.shields.io/github/license/lattyware/elm-json-diff) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/lattyware/elm-json-diff/Tests)
+[![Elm package](https://img.shields.io/elm-package/v/lattyware/elm-json-diff)](https://package.elm-lang.org/packages/lattyware/elm-json-diff/latest/) [![GitHub](https://img.shields.io/github/license/lattyware/elm-json-diff)](https://github.com/Lattyware/elm-json-diff/blob/1.0.0/LICENSE) [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/lattyware/elm-json-diff/Tests)](https://github.com/Lattyware/elm-json-diff/actions?query=workflow%3ATests)
 
 Compute JSON patches by comparing two JSON values.
 
