@@ -359,6 +359,12 @@ cases =
                     {"op": "remove", "path": "/a"}, {"op": "remove", "path": "/c"},
                     {"op": "add", "path": "/d", "value": 1}, {"op": "add", "path": "/e", "value": 1}
                 ]
+            },
+            {
+                "description": "add an object with a value to another object",
+                "a": {"a": 1},
+                "b": {"a": 1, "b": {"c": 2}},
+                "patch": [{"op": "add", "path": "/b", "value": {"c": 2}}]
             }
         ]
     """

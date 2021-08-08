@@ -143,18 +143,18 @@ internalCheapDiff root a b =
 
 cheapDiffList : Json.Pointer -> ( List Json.Value, List Json.Value ) -> Invertible.Patch
 cheapDiffList root ( a, b ) =
-    List.range 0 (max (List.length a) (List.length b))
+    let
+        diffIndex index =
+            diffField internalCheapDiff root (String.fromInt index) (get index a) (get index b)
+    in
+    List.range 0 (max (List.length a - 1) (List.length b - 1))
         |> List.reverse
-        |> List.concatMap (\i -> diffField internalCheapDiff root (String.fromInt i) (get i a) (get i b))
+        |> List.concatMap diffIndex
 
 
 get : Int -> List a -> Maybe a
-get i values =
-    if i > 0 then
-        values |> List.drop i |> List.head
-
-    else
-        Nothing
+get i =
+    List.drop i >> List.head
 
 
 defaultPatchWeight : Invertible.Patch -> Int
