@@ -2,11 +2,11 @@ module Invertible exposing (invertSuite, mergeSuite)
 
 import Cases exposing (TestCase, suiteUsingTestCases)
 import Expect exposing (Expectation)
-import Json.Decode as Json
 import Json.Diff as Diff
 import Json.Encode as JsonE
 import Json.Patch.Invertible as Invertable
 import Test exposing (..)
+import Util.Expect as Expect
 
 
 invertSuite : Test
@@ -27,7 +27,7 @@ invertTest { a, b } =
             in
             case a |> Invertable.apply diff |> Result.andThen (Invertable.apply inverted) of
                 Ok aAgain ->
-                    expectJsonEqual a aAgain
+                    Expect.jsonEqual a aAgain
 
                 Err err ->
                     Expect.fail err
@@ -54,7 +54,7 @@ mergeTest { a, b } =
                 Ok patched ->
                     case a |> Invertable.apply mergedDiff of
                         Ok mergePatched ->
-                            expectJsonEqual patched mergePatched
+                            Expect.jsonEqual patched mergePatched
 
                         Err err ->
                             Expect.fail err
@@ -62,11 +62,3 @@ mergeTest { a, b } =
                 Err err ->
                     Expect.fail err
         )
-
-
-expectJsonEqual : Json.Value -> Json.Value -> Expectation
-expectJsonEqual a =
-    Expect.all
-        [ Expect.equal a
-        , \b -> Expect.equal b a
-        ]

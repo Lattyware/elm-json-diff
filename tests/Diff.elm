@@ -6,6 +6,7 @@ import Json.Diff as Diff
 import Json.Encode as JsonE
 import Json.Patch as Json
 import Test exposing (..)
+import Util.Expect as Expect
 
 
 suite : Test
@@ -20,8 +21,5 @@ toTest { description, a, b, patch } =
 
 
 expectPatchEqual : Json.Patch -> Json.Patch -> Expectation
-expectPatchEqual a =
-    Expect.all
-        [ Expect.equal a
-        , \b -> Expect.equal b a
-        ]
+expectPatchEqual a b =
+    Expect.jsonEqual (Json.encoder a) (Json.encoder b)
