@@ -365,6 +365,12 @@ cases =
                 "a": {"a": 1},
                 "b": {"a": 1, "b": {"c": 2}},
                 "patch": [{"op": "add", "path": "/b", "value": {"c": 2}}]
+            },
+            {
+                "description": "add values to list",
+                "a": [1, 2, 3, 4],
+                "b": [1, 2, 3, 4, 5, 6],
+                "patch": [{"op": "add", "path": "/4", "value": 5}, {"op": "add", "path": "/5", "value": 6}]
             }
         ]
     """

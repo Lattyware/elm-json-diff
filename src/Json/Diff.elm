@@ -146,10 +146,21 @@ cheapDiffList root ( a, b ) =
     let
         diffIndex index =
             diffField internalCheapDiff root (String.fromInt index) (get index a) (get index b)
+
+        aLen =
+            List.length a
+
+        bLen =
+            List.length b
+
+        range =
+            if aLen >= bLen then
+                List.range 0 (aLen - 1) |> List.reverse
+
+            else
+                List.range 0 (bLen - 1)
     in
-    List.range 0 (max (List.length a - 1) (List.length b - 1))
-        |> List.reverse
-        |> List.concatMap diffIndex
+    range |> List.concatMap diffIndex
 
 
 get : Int -> List a -> Maybe a

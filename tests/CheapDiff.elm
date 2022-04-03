@@ -7,6 +7,7 @@ import Json.Encode as JsonE
 import Json.Patch as Json
 import Json.Patch.Invertible as Invertible
 import Test exposing (..)
+import Util.Expect as Expect
 
 
 suite : Test
@@ -21,21 +22,16 @@ toTest { description, a, b, patch } =
             let
                 applyPatchToA p =
                     Json.apply p a
+
+                diffedPatch =
+                    Diff.cheapDiff a b |> Invertible.toMinimalPatch
             in
-            case Diff.cheapDiff a b |> Invertible.toMinimalPatch |> applyPatchToA of
+            case diffedPatch |> applyPatchToA of
                 Ok hopefullyB ->
-                    expectJsonEqual b hopefullyB
+                    Expect.jsonEqual b hopefullyB
 
                 Err err ->
-                    Expect.fail ("Couldn't apply patch: " ++ err)
+                    Expect.fail ("Couldn't apply patch:\n\tPatch: " ++ (diffedPatch |> Json.encoder |> JsonE.encode 0) ++ "\n\tError: " ++ err)
     in
     test (description ++ " | a: " ++ (a |> JsonE.encode 0) ++ " | b: " ++ (b |> JsonE.encode 0))
         doTest
-
-
-expectJsonEqual : JsonE.Value -> JsonE.Value -> Expectation
-expectJsonEqual a =
-    Expect.all
-        [ Expect.equal a
-        , \b -> Expect.equal b a
-        ]
